@@ -6,7 +6,7 @@ const resolvers = {
     Query: {
         users: async (parent, { _id }) => {
             const params = _id ? { _id } : {};
-            return User.find({params});
+            return User.find(params);
           },
     },
     Mutation: {
@@ -14,7 +14,7 @@ const resolvers = {
             const user = await User.create(args);
 
             if (!user) {
-                return res.status(400).json({ message: 'Something is wrong!' });
+                return { message: 'Something is wrong!' };
               }
 
             const token = signToken(user);
@@ -25,13 +25,13 @@ const resolvers = {
             const user = await User.findOne({ $or: [{ username: args.username }, { email: args.email }] });
 
             if (!user) {
-                return res.status(400).json({ message: "Can't find this user" });
+                return { message: "Can't find this user" };
             }
             
             const correctPw = await user.isCorrectPassword(body.password);
 
             if (!correctPw) {
-                return res.status(400).json({ message: 'Wrong password!' });
+                return { message: 'Wrong password!' };
             }
 
             const token = signToken(user);
@@ -51,6 +51,17 @@ const resolvers = {
                 return err;
             }
         },
+        deleteBook: async (parent, args) => {
+            const updatedUser = await User.findOneAndUpdate(
+                { _id: user._id },
+                { $pull: { savedBooks: { bookId: args.bookId } } },
+                { new: true }
+            );
+            if (!updatedUser) {
+                return { message: "Couldn't find user with this id!" };
+            }
+            return updatedUser;
+        }
     }
 }
 
