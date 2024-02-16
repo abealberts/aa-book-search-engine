@@ -60,7 +60,7 @@ const resolvers = {
                 return err;
             }
         },
-        deleteBook: async (parent, args, context) => {
+        removeBook: async (parent, args, context) => {
             try {
                 const updatedUser = await User.findOneAndUpdate(
                     { _id: context.user._id },

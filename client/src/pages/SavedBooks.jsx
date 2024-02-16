@@ -1,54 +1,36 @@
-import { useState, useEffect } from 'react';
-import { Container, Card, Button, Row, Col } from 'react-bootstrap';
+import { useEffect } from 'react';
+import {
+  Container,
+  Card,
+  Button,
+  Row,
+  Col
+} from 'react-bootstrap';
 
-import { useQuery, useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { QUERY_ACTIVE_USER } from '../utils/queries';
-import { DELETE_BOOK } from '../utils/mutations';
+import { REMOVE_BOOK } from '../utils/mutations';
 
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
-  // const [userData, setUserData] = useState({});
-
-  const { loading, data } = useQuery(QUERY_ACTIVE_USER);
-  const [deleteBook] = useMutation(DELETE_BOOK);
-
+  const { loading, data, refetch } = useQuery(QUERY_ACTIVE_USER);
+  const [removeBook] = useMutation(REMOVE_BOOK);
   const userData = data?.activeUser || {};
 
-    // if data isn't here yet, say so
-    if (loading) {
-      return <h2>LOADING...</h2>;
-    }
+  useEffect(() => {
+    refetch(); // Trigger refetch on initial render
+  }, [refetch]);
 
-// // // use this to determine if `useEffect()` hook needs to run again
+  if (loading) {
+    return <h2>Loading Books...</h2>;
+  }
 
-// useEffect(() => {
-//   const getUserData = async () => {
-//     try {
-//       const token = Auth.loggedIn() ? Auth.getToken() : null;
+  if (!userData?.username) {
+    return <h4>You must be logged in the view this page.</h4>;
+  }
 
-//       if (!token) {
-//         return false;
-//       }
-
-//       const response = await getMe(token);
-
-//       if (!response.ok) {
-//         throw new Error('something went wrong!');
-//       }
-
-//       const user = await response.json();
-//       setUserData(user);
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   };
-
-//   getUserData();
-// }, [userDataLength]);
-
-  // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
@@ -57,13 +39,9 @@ const SavedBooks = () => {
     }
 
     try {
-      await deleteBook({
-        variables: { bookId }
-      });
-
-      // upon success, remove book's id from localStorage
+      await removeBook({ variables: { bookId: bookId } });
+      await refetch();
       removeBookId(bookId);
-
     } catch (err) {
       console.error(err);
     }
@@ -71,7 +49,7 @@ const SavedBooks = () => {
 
   return (
     <>
-      <div fluid className="text-light bg-dark p-5">
+      <div fluid="true" className="text-light bg-dark p-5">
         <Container>
           <h1>Viewing saved books!</h1>
         </Container>
